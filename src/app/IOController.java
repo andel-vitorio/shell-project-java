@@ -6,6 +6,7 @@ public class IOController {
   private static final String NORMAL_TYPE = "\u001B[0m";
   private static final String BOLD_TYPE = "\u001B[1m";
   private static final String RED_COLOR = "\u001B[31m";
+  private static final String GREEN_COLOR = "\u001B[32m";
 
   private static OutputStream outputStream = System.out;
   private static InputStream inputStream = System.in;
@@ -13,19 +14,19 @@ public class IOController {
   private static String parseTags(String text) {
     if (text == null)
       return "";
-    return text.replace("<b>", BOLD_TYPE)
-        .replace("</b>", NORMAL_TYPE)
+    return text.replace("<reset>", NORMAL_TYPE)
+        .replace("<b>", BOLD_TYPE)
         .replace("<red>", RED_COLOR)
-        .replace("</red>", NORMAL_TYPE);
+        .replace("<green>", GREEN_COLOR);
   }
 
   private static String removeTags(String text) {
     if (text == null)
       return "";
-    return text.replace("<b>", "")
-        .replace("</b>", "")
+    return text.replace("<reset>", "")
+        .replace("<b>", "")
         .replace("<red>", "")
-        .replace("</red>", "");
+        .replace("<green>", "");
   }
 
   public static void setOutputStream(String stream) throws IOException {

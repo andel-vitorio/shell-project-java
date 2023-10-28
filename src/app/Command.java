@@ -6,26 +6,28 @@ import java.util.function.Consumer;
 public class Command {
   private String name;
   private ArrayList<String> arguments;
-  private ArrayList<String> options;
-  private String documention;
+  private String options;
+  private String documentation;
   private Consumer<Command> action;
+  private ArrayList<String> results;
 
   public Command(String name) {
     this.name = name;
     this.arguments = new ArrayList<>();
-    this.options = new ArrayList<>();
+    this.results = new ArrayList<>();
+    options = new String();
   }
 
   public String getName() {
     return name;
   }
 
-  public void setDocumention(String documention) {
-    this.documention = documention;
+  public void setDocumentation(String doc) {
+    this.documentation = doc;
   }
 
-  public String getDocumention() {
-    return documention;
+  public String getDocumentation() {
+    return documentation;
   }
 
   public void addArgument(String arg) {
@@ -37,7 +39,11 @@ public class Command {
   }
 
   public void addOption(String op) {
-    this.options.add(op);
+    this.options = op;
+  }
+
+  public String getOptions() {
+    return options;
   }
 
   public void setAction(Consumer<Command> action) {
@@ -46,7 +52,8 @@ public class Command {
 
   public void clear() {
     arguments.clear();
-    options.clear();
+    results.clear();
+    this.options = "";
   }
 
   public void execute() {
@@ -54,5 +61,13 @@ public class Command {
       action.accept(this);
     else
       IOController.write("<b><red>" + this.name + ":</b><red> Nenhuma ação foi definida para este comando!</red>");
+  }
+
+  public void addResult(String result) {
+    this.results.add(result);
+  }
+
+  public ArrayList<String> getResults() {
+    return results;
   }
 }

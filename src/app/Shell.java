@@ -8,7 +8,14 @@ public class Shell {
   private boolean isRunning;
 
   private void writeCommandLine() {
-    IOController.write("$ ");
+    Command username = CommandManager.getUsernameCommand();
+    username.addOption("--no-print");
+    username.execute();
+
+    IOController.write("<b><green>" + username.getResults().get(0) + "<reset>");
+    IOController.write(" <b>$<reset> ");
+
+    username.clear();
   }
 
   public Shell() {
@@ -18,8 +25,10 @@ public class Shell {
 
   public void run() throws IOException {
     //IOController.setInputStream("input");
-    IOController.writeLine("<b>Shell Project v1.0</b>");
-    IOController.writeLine("Digite <b>'help'</b> para obter ajuda ou <b>'exit'</b> para sair.\n");
+    IOController.writeLine("<b>Shell Project v1.0<reset>");
+    IOController.writeLine("Digite <b>'help'<reset> para obter ajuda ou <b>'exit'<reset> para sair.\n");
+
+    CommandManager.setup();
     
     Scanner scan = new Scanner(System.in);
 
