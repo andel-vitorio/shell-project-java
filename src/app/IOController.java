@@ -11,7 +11,7 @@ public class IOController {
   private static OutputStream outputStream = System.out;
   private static InputStream inputStream = System.in;
 
-  private static String parseTags(String text) {
+  public static String parseTags(String text) {
     if (text == null)
       return "";
     return text.replace("<reset>", NORMAL_TYPE)

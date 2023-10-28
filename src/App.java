@@ -1,6 +1,5 @@
 import java.io.IOException;
 
-import app.IOController;
 import app.Shell;
 
 public class App {

@@ -12,7 +12,7 @@ public final class CommandManager {
       try {
         String username = System.getProperty("user.name");
         if (!cmd.getOptions().contains("--no-print"))
-          IOController.writeLine(username);
+          IOController.writeLine(username + '\n');
         cmd.addResult(username);
       } catch (IOException e) {
         e.printStackTrace();
