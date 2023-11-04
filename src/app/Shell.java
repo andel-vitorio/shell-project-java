@@ -9,13 +9,20 @@ public class Shell {
 
   private void writeCommandLine() {
     Command username = CommandManager.getUsernameCommand();
-    username.addOption("--no-print");
+    username.addOption("-q");
     username.execute();
 
+    Command hostname = CommandManager.getHostnameCommand();
+    hostname.addOption("-q");
+    hostname.execute();
+
     IOController.write("<b><green>" + username.getResults().get(0) + "<reset>");
+    IOController.write("<b><blue>@<reset>");
+    IOController.write("<b><green>" + hostname.getResults().get(0) + "<reset>");
     IOController.write(" <b>$<reset> ");
 
     username.clear();
+    hostname.clear();
   }
 
   private void executeCommandFromText(String text) throws IOException {
@@ -39,6 +46,10 @@ public class Shell {
     if (items[0].equals("exit")) this.isRunning = false;
     else if (items[0].equals("username")) {
       command = CommandManager.getUsernameCommand();
+      command.execute();
+    }
+    else if (items[0].equals("hostname")) {
+      command = CommandManager.getHostnameCommand();
       command.execute();
     }
 

@@ -7,6 +7,9 @@ public class IOController {
   private static final String BOLD_TYPE = "\u001B[1m";
   private static final String RED_COLOR = "\u001B[31m";
   private static final String GREEN_COLOR = "\u001B[32m";
+  private static final String BLUE_COLOR = "\u001B[34m";  
+  private static final String CYAN_COLOR = "\u001B[36m";
+
 
   private static OutputStream outputStream = System.out;
   private static InputStream inputStream = System.in;
@@ -17,7 +20,9 @@ public class IOController {
     return text.replace("<reset>", NORMAL_TYPE)
         .replace("<b>", BOLD_TYPE)
         .replace("<red>", RED_COLOR)
-        .replace("<green>", GREEN_COLOR);
+        .replace("<green>", GREEN_COLOR)
+        .replace("<blue>", BLUE_COLOR)
+        .replace("<cyan>", CYAN_COLOR);
   }
 
   private static String removeTags(String text) {
