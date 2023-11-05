@@ -3,18 +3,16 @@ package app;
 import java.util.ArrayList;
 import java.util.function.Consumer;
 
-public class Command {
+public class Command<ResultType> {
   private String name;
-  private ArrayList<String> arguments;
+  private String arguments = "";
   private String options;
   private String documentation;
-  private Consumer<Command> action;
-  private ArrayList<String> results;
+  private Consumer<Command<ResultType>> action;
+  private ResultType results;
 
   public Command(String name) {
     this.name = name;
-    this.arguments = new ArrayList<>();
-    this.results = new ArrayList<>();
     options = new String();
   }
 
@@ -30,11 +28,11 @@ public class Command {
     return documentation;
   }
 
-  public void addArgument(String arg) {
-    this.arguments.add(arg);
+  public void addArguments(String name, String value) {
+    this.arguments += ("--" + name + " " + value + ' ');
   }
 
-  public ArrayList<String> getArguments() {
+  public String getArguments() {
     return arguments;
   }
 
@@ -46,14 +44,14 @@ public class Command {
     return options;
   }
 
-  public void setAction(Consumer<Command> action) {
+  public void setAction(Consumer<Command<ResultType>> action) {
     this.action = action;
   }
 
   public void clear() {
-    arguments.clear();
-    results.clear();
     this.options = "";
+    this.arguments = "";
+    this.results = null;
   }
 
   public void execute() {
@@ -63,11 +61,15 @@ public class Command {
       IOController.write("<b><red>" + this.name + ":</b><red> Nenhuma ação foi definida para este comando!</red>");
   }
 
-  public void addResult(String result) {
-    this.results.add(result);
+  public void addResult(ResultType result) {
+    this.results = result;
   }
 
-  public ArrayList<String> getResults() {
+  public ResultType getResults() {
     return results;
+  }
+
+  public boolean hasArguments() {
+    return this.arguments != null && this.arguments.length() > 0; 
   }
 }
