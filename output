@@ -1,1 +1,5 @@
-Andevaldo
+JAVAC = javac
+JAVA = java
+	$(JAVAC) -d $(BIN_DIR) -sourcepath $(SRC_DIR) $(SRC_DIR)/$(MAIN_CLASS).java
+javadoc:
+	javadoc -d $(DOC_DIR) -sourcepath $(SRC_DIR) $(PACKAGES_ARG)

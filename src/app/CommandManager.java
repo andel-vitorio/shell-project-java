@@ -547,26 +547,66 @@ public final class CommandManager {
 
       ArrayList<String> paths = Utils.extractQuotedStrings(params);
 
-      if (paths.size() > 1 ) {
+      if (paths.size() > 1) {
         String sourcePath = Utils.resolvePath(paths.get(0));
         String targetPath = Utils.resolvePath(paths.get(1));
         try (InputStream in = new FileInputStream(sourcePath);
-             OutputStream out = new FileOutputStream(targetPath)) {
+            OutputStream out = new FileOutputStream(targetPath)) {
 
-            byte[] buffer = new byte[1024];
-            int bytesRead;
+          byte[] buffer = new byte[1024];
+          int bytesRead;
 
-            while ((bytesRead = in.read(buffer)) != -1) {
-                out.write(buffer, 0, bytesRead);
-            }
+          while ((bytesRead = in.read(buffer)) != -1) {
+            out.write(buffer, 0, bytesRead);
+          }
 
-            System.out.println("Arquivo copiado com sucesso.");
+          System.out.println("Arquivo copiado com sucesso.");
         } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("Falha ao copiar o arquivo.");
+          e.printStackTrace();
+          System.out.println("Falha ao copiar o arquivo.");
         }
       }
 
+    });
+
+    /* ------------ cp Setup -------------- */
+    grepCommand = new Command<String>("grep");
+    grepCommand.setDocumentation("");
+    grepCommand.setAction(cmd -> {
+      String params = cmd.getParams();
+      ArrayList<String> args = Utils.extractQuotedStrings(params);
+
+      if (args.size() > 1 && !cmd.isRedirectedInput()) {
+        String filepath = Utils.resolvePath(args.get(1));
+        try {
+          if (!IOController.setInputStream(filepath)) {
+            return;
+          }
+        } catch (FileNotFoundException e) {
+          System.out.println(e.getMessage() + '\n');
+          return;
+        }
+      } else if (!(args.size() == 1 && cmd.isRedirectedInput())){
+        System.out.println("Argumentos insulficientes");
+        return;
+      }
+
+      String pattern = args.get(0);
+
+      String line;
+      Pattern regex = Pattern.compile(pattern);
+
+      while ((line = IOController.readLine()) != null) {
+        Matcher matcher = regex.matcher(line);
+        if (matcher.find()) {
+          line = matcher.replaceAll("<b><red>" + pattern + "<reset>");
+          try {
+            IOController.writeLine(line);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      }
     });
 
     commandMap.put(usernameCommand.getName(), usernameCommand);
@@ -582,7 +622,7 @@ public final class CommandManager {
     commandMap.put(catCommand.getName(), catCommand);
     commandMap.put(cdCommand.getName(), cdCommand);
     commandMap.put(cpCommand.getName(), cpCommand);
-    // commandMap.put(grepCommand.getName(), grepCommand);
+    commandMap.put(grepCommand.getName(), grepCommand);
   }
 
   public static Command<String> getUsernameCommand() {

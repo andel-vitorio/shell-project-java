@@ -82,7 +82,7 @@ public class IOController {
         reader = null;
         inputStream = inputFile;
       } catch (FileNotFoundException e) {
-        System.out.print(e.getMessage());
+        System.out.println(e.getMessage());
         return false;
       }
     }

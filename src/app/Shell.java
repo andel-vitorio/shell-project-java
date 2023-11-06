@@ -9,7 +9,6 @@ import utils.Utils;
 
 public class Shell {
 
-  private static Map<String, Command<?>> commandMap = new HashMap<>();
   private boolean isRunning = false;
 
   private void writeCommandLine() {
@@ -88,6 +87,7 @@ public class Shell {
       IOController.writeLine("<red>Comando Inexistente: <b>" + cmd + "<reset>\n");
     }
 
+    System.out.println();
     IOController.reset();
   }
 
