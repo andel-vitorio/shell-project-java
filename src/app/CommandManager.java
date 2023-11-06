@@ -19,6 +19,7 @@ public final class CommandManager {
   private static Command<String> manCommand;
   private static Command<String> echoCommand;
   private static Command<Void> touchCommand;
+  private static Command<Void> mkdirCommand;
 
   private static Map<String, String> parseArguments(String input) {
     Map<String, String> arguments = new HashMap<>();
@@ -287,6 +288,42 @@ public final class CommandManager {
       System.out.println("");
     });
 
+    /* ------------ mkdir Setup -------------- */
+    mkdirCommand = new Command<Void>("mkdir");
+    mkdirCommand.setDocumentation("");
+    mkdirCommand.setAction(cmd -> {
+      String params = cmd.getParams();
+      
+      if (cmd.isRedirectedInput()) {
+        String line;
+        while((line = IOController.readLine()) != null) {
+          params += (line + '\n');
+        }
+      }
+
+      ArrayList<String> dirpaths = Utils.extractQuotedStrings(params);
+
+      for (String path : dirpaths) {
+
+        path = Utils.expandTilde(path);
+        String p = "";
+
+        for (String str : path.split("/")) {
+            p += str + "/";
+            File directory = new File(p);
+            if ( directory.mkdirs() ) {
+              try {
+                IOController.writeLine("Diretório " + directory.getName() + " criado com sucesso");
+              } catch (IOException e) {
+                e.printStackTrace();
+              }
+            } else System.out.println("Falha ao criar o diretório " + directory.getName());
+        }
+      }
+
+      System.out.println("");
+    });
+
     commandMap.put(usernameCommand.getName(), usernameCommand);
     commandMap.put(hostnameCommand.getName(), hostnameCommand);
     commandMap.put(pwdCommand.getName(), pwdCommand);
@@ -294,6 +331,7 @@ public final class CommandManager {
     commandMap.put(manCommand.getName(), manCommand);
     commandMap.put(echoCommand.getName(), echoCommand);
     commandMap.put(touchCommand.getName(), touchCommand);
+    commandMap.put(mkdirCommand.getName(), mkdirCommand);
   }
 
   public static Command<String> getUsernameCommand() {
