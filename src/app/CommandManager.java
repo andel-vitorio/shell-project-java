@@ -3,14 +3,20 @@ package app;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import utils.Utils;
 
 public final class CommandManager {
+
+  private static Map<String, Command<?>> commandMap = new HashMap<>();
+
   private static Command<String> usernameCommand;
   private static Command<String> hostnameCommand;
   private static Command<String> pwdCommand;
   private static Command<ArrayList<File>> lsCommand;
+  private static Command<String> manCommand;
 
   private static Map<String, String> parseArguments(String input) {
     Map<String, String> arguments = new HashMap<>();
@@ -110,19 +116,31 @@ public final class CommandManager {
       String path = "./";
       String mode = "";
 
-      if (cmd.hasArguments()) {
-        var args = CommandManager.parseArguments(cmd.getArguments());
+      String params = cmd.getParams();
 
-        path = args.get("path");
-        mode = args.get("mode");
+      if (params != null) {
+        Pattern modePattern = Pattern.compile("-(la|al|l|a)\\s*");
+        Matcher modeMatcher = modePattern.matcher(params);
 
-        if (path == null)
-          path = "./";
-        else
-          path = Utils.expandTilde(path);
+        while (modeMatcher.find())
+          mode += modeMatcher.group(1);
 
-        if (mode == null) mode = "";
+        String paramsWithoutMode = params.replaceAll("-(la|al|l|a)\\s*", "");
+
+        String[] parts = paramsWithoutMode.split("\\s+");
+
+        if (parts.length > 0) {
+          path = parts[0];
+
+          if (path.startsWith("/")) {
+            path = "." + path;
+          } else if (!path.startsWith("~")) {
+            path = "./" + path;
+          }
+        }
       }
+
+      path = Utils.expandTilde(path);
 
       File dir = new File(path);
       ArrayList<File> files = new ArrayList<>(Arrays.asList(dir.listFiles()));
@@ -147,11 +165,11 @@ public final class CommandManager {
         for (File dirFile : dirs) {
           if (dirFile == null)
             continue;
-
           if (dirFile.isDirectory()) {
             IOController.write("<magenta>");
             symbol = "/";
-          } else symbol = "";
+          } else
+            symbol = "";
 
           if (list) {
             try {
@@ -165,7 +183,6 @@ public final class CommandManager {
           IOController.write("<reset>");
         }
 
-
         if (!list) {
           try {
             IOController.writeLine("");
@@ -174,10 +191,47 @@ public final class CommandManager {
           }
         }
 
-        cmd.addResult(files);
+        try {
+          IOController.writeLine("");
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
       }
 
+      cmd.addResult(files);
     });
+
+    manCommand = new Command<String>("man");
+    manCommand.setDocumentation("");
+    manCommand.setAction(cmd -> {
+      int i = 1;
+      try {
+        IOController.writeLine("Comandos Disponiveis: \n");
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      for (Map.Entry<String, Command<?>> entry : commandMap.entrySet()) {
+        String commandName = entry.getKey();
+        try {
+          IOController.writeLine((i++) + " " + commandName);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+      }
+
+      try {
+        IOController.writeLine("");
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    });
+
+    commandMap.put(usernameCommand.getName(), usernameCommand);
+    commandMap.put(hostnameCommand.getName(), hostnameCommand);
+    commandMap.put(pwdCommand.getName(), pwdCommand);
+    commandMap.put(lsCommand.getName(), lsCommand);    
+    commandMap.put(manCommand.getName(), manCommand);
+
   }
 
   public static Command<String> getUsernameCommand() {
@@ -194,5 +248,9 @@ public final class CommandManager {
 
   public static Command<ArrayList<File>> getLsCommand() {
     return lsCommand;
+  }
+
+  public static Command<?> getCommandByName(String name) {
+    return commandMap.get(name);
   }
 }

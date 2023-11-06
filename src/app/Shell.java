@@ -9,6 +9,7 @@ import utils.Utils;
 
 public class Shell {
 
+  private static Map<String, Command<?>> commandMap = new HashMap<>();
   private boolean isRunning = false;
 
   private void writeCommandLine() {
@@ -71,52 +72,13 @@ public class Shell {
 
     if (cmd.equals("exit"))
       this.isRunning = false;
-    else if (cmd.equals("username")) {
-      command = CommandManager.getUsernameCommand();
+    else if ((command = CommandManager.getCommandByName(cmd.trim())) != null) {
+      command.setParams(params);
       command.execute();
-    } else if (cmd.equals("hostname")) {
-      command = CommandManager.getHostnameCommand();
-      command.execute();
-    } else if (cmd.equals("pwd")) {
-      command = CommandManager.getPwdCommand();
-      command.execute();
-    } else if (cmd.equals("ls")) {
-      String mode = "", path = "";
-
-      if (params != null) {
-        Pattern modePattern = Pattern.compile("-(la|al|l|a)\\s*");
-        Matcher modeMatcher = modePattern.matcher(params);
-
-        while (modeMatcher.find())
-          mode += modeMatcher.group(1);
-
-        String paramsWithoutMode = params.replaceAll("-(la|al|l|a)\\s*", "");
-
-        String[] parts = paramsWithoutMode.split("\\s+");
-
-        if (parts.length > 0) {
-          path = parts[0];
-
-          if (path.startsWith("/")) {
-            path = "." + path;
-          } else if (!path.startsWith("~")) {
-            path = "./" + path;
-          }
-        }
-      }
-
-      command = CommandManager.getLsCommand();
-
-      if (mode != "")
-        command.addArguments("mode", mode);
-      if (path != "")
-        command.addArguments("path", path);
-
-      command.execute();
-    }
-
-    if (command != null)
       command.clear();
+    } else {
+      IOController.writeLine("<red>Comando Inexistente: <b>" + cmd + "<reset>\n");
+    }
   }
 
   public void run() throws IOException {

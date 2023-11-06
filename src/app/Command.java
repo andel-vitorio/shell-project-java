@@ -5,7 +5,7 @@ import java.util.function.Consumer;
 
 public class Command<ResultType> {
   private String name;
-  private String arguments = "";
+  private String params;
   private String options;
   private String documentation;
   private Consumer<Command<ResultType>> action;
@@ -28,12 +28,12 @@ public class Command<ResultType> {
     return documentation;
   }
 
-  public void addArguments(String name, String value) {
-    this.arguments += ("--" + name + " " + value + ' ');
+  public void setParams(String params) {
+    this.params = params;
   }
 
-  public String getArguments() {
-    return arguments;
+  public String getParams() {
+    return params;
   }
 
   public void addOption(String op) {
@@ -50,7 +50,7 @@ public class Command<ResultType> {
 
   public void clear() {
     this.options = "";
-    this.arguments = "";
+    this.params = "";
     this.results = null;
   }
 
@@ -70,6 +70,6 @@ public class Command<ResultType> {
   }
 
   public boolean hasArguments() {
-    return this.arguments != null && this.arguments.length() > 0; 
+    return this.params != null && this.params.length() > 0; 
   }
 }
