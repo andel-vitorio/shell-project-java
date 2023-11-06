@@ -1,5 +1,6 @@
 package utils;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,29 +25,28 @@ public class Utils {
   public static ArrayList<String> extractQuotedStrings(String input) {
     ArrayList<String> result = new ArrayList<>();
 
-    for (String line: input.split("\n")) {
+    for (String line : input.split("\n")) {
       Pattern pattern = Pattern.compile("'(.*?)'|\"(.*?)\"|([^\"'\\s]+)");
       Matcher matcher = pattern.matcher(line);
-  
+
       while (matcher.find()) {
         String singleQuotes = matcher.group(1);
         String doubleQuotes = matcher.group(2);
         String unquoted = matcher.group(3);
-  
+
         if (singleQuotes != null) {
           result.add(singleQuotes);
         }
-  
+
         if (doubleQuotes != null) {
           result.add(doubleQuotes);
         }
-  
+
         if (unquoted != null) {
           result.add(unquoted);
         }
       }
     }
-
 
     return result;
   }
@@ -68,6 +68,27 @@ public class Utils {
     }
 
     return result.toString();
+  }
+
+  public static String resolvePath(String inputPath) {
+    File currentDirectory = new File(System.getProperty("user.dir"));
+    String[] pathComponents = inputPath.split(File.separator);
+
+    for (int i = 0; i < pathComponents.length; i++) {
+      String component = pathComponents[i];
+      if (component.equals(".")) {
+      } else if (component.equals("..")) {
+        currentDirectory = currentDirectory.getParentFile();
+      } else if (component.startsWith("~")) {
+        String homeDir = System.getProperty("user.home");
+        pathComponents[i] = component.replaceFirst("~", homeDir);
+        currentDirectory = new File(homeDir);
+      } else {
+        currentDirectory = new File(currentDirectory, component);
+      }
+    }
+
+    return currentDirectory.getAbsolutePath();
   }
 
 }

@@ -23,6 +23,7 @@ public final class CommandManager {
   private static Command<Void> rmCommand;
   private static Command<Void> mvCommand;
   private static Command<Void> catCommand;
+  private static Command<Void> cdCommand;
 
   private static Map<String, String> parseArguments(String input) {
     Map<String, String> arguments = new HashMap<>();
@@ -119,12 +120,13 @@ public final class CommandManager {
     lsCommand = new Command<ArrayList<File>>("ls");
     lsCommand.setDocumentation("");
     lsCommand.setAction(cmd -> {
-      String path = "./";
+      String path = System.getProperty("user.dir");
       String mode = "";
+
 
       String params = cmd.getParams();
 
-      if (params != null) {
+      if (params != null && params.trim().length() > 0) {
         Pattern modePattern = Pattern.compile("-(la|al|l|a)\\s*");
         Matcher modeMatcher = modePattern.matcher(params);
 
@@ -501,6 +503,31 @@ public final class CommandManager {
 
     });
 
+    /* ------------ cat Setup -------------- */
+    cdCommand = new Command<Void>("cd");
+    cdCommand.setDocumentation("");
+    cdCommand.setAction(cmd -> {
+      String params = cmd.getParams();
+
+      if (cmd.isRedirectedInput()) {
+        String line;
+        while ((line = IOController.readLine()) != null) {
+          params += (line + '\n');
+        }
+      }
+
+      ArrayList<String> paths = Utils.extractQuotedStrings(params);
+
+      File dir = new File(Utils.resolvePath(paths.get(0)));
+
+      if (dir.exists() && dir.isDirectory()) {
+        System.setProperty("user.dir", dir.getAbsolutePath());
+      } else {
+        System.out.println("Diretório não encontrado: " + dir.getName());
+      }
+
+    });
+
     commandMap.put(usernameCommand.getName(), usernameCommand);
     commandMap.put(hostnameCommand.getName(), hostnameCommand);
     commandMap.put(pwdCommand.getName(), pwdCommand);
@@ -512,6 +539,7 @@ public final class CommandManager {
     commandMap.put(rmCommand.getName(), rmCommand);
     commandMap.put(mvCommand.getName(), mvCommand);
     commandMap.put(catCommand.getName(), catCommand);
+    commandMap.put(cdCommand.getName(), cdCommand);
   }
 
   public static Command<String> getUsernameCommand() {
