@@ -20,6 +20,7 @@ public final class CommandManager {
   private static Command<String> echoCommand;
   private static Command<Void> touchCommand;
   private static Command<Void> mkdirCommand;
+  private static Command<Void> rmCommand;
 
   private static Map<String, String> parseArguments(String input) {
     Map<String, String> arguments = new HashMap<>();
@@ -255,10 +256,10 @@ public final class CommandManager {
     touchCommand.setDocumentation("");
     touchCommand.setAction(cmd -> {
       String params = cmd.getParams();
-      
+
       if (cmd.isRedirectedInput()) {
         String line;
-        while((line = IOController.readLine()) != null) {
+        while ((line = IOController.readLine()) != null) {
           params += (line + '\n');
         }
       }
@@ -293,10 +294,10 @@ public final class CommandManager {
     mkdirCommand.setDocumentation("");
     mkdirCommand.setAction(cmd -> {
       String params = cmd.getParams();
-      
+
       if (cmd.isRedirectedInput()) {
         String line;
-        while((line = IOController.readLine()) != null) {
+        while ((line = IOController.readLine()) != null) {
           params += (line + '\n');
         }
       }
@@ -309,19 +310,89 @@ public final class CommandManager {
         String p = "";
 
         for (String str : path.split("/")) {
-            p += str + "/";
-            File directory = new File(p);
-            if ( directory.mkdirs() ) {
-              try {
-                IOController.writeLine("Diretório " + directory.getName() + " criado com sucesso");
-              } catch (IOException e) {
-                e.printStackTrace();
-              }
-            } else System.out.println("Falha ao criar o diretório " + directory.getName());
+          p += str + "/";
+          File directory = new File(p);
+          if (directory.mkdirs()) {
+            try {
+              IOController.writeLine("Diretório " + directory.getName() + " criado com sucesso");
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          } else
+            System.out.println("Falha ao criar o diretório " + directory.getName());
         }
       }
 
       System.out.println("");
+    });
+
+    /* ------------ mkdir Setup -------------- */
+    rmCommand = new Command<Void>("rm");
+    rmCommand.setDocumentation("");
+    rmCommand.setAction(cmd -> {
+      String params = cmd.getParams();
+
+      if (cmd.isRedirectedInput()) {
+        String line;
+        while ((line = IOController.readLine()) != null) {
+          params += (line + '\n');
+        }
+      }
+
+      ArrayList<String> dirpaths = Utils.extractQuotedStrings(params);
+
+      for (String path : dirpaths) {
+
+        path = Utils.expandTilde(path);
+
+        File item = new File(path);
+
+        if (!item.exists()) {
+          System.out.println("O arquivo ou diretório não existe.");
+          return;
+        }
+
+        if (item.isFile()) {
+          if (item.delete()) {
+            try {
+              IOController.writeLine("Arquivo \"" + item.getName() + "\" deletado com sucesso");
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          } else {
+            System.out.println("Falha ao excluir o arquivo \"" + item + "\"");
+          }
+        } else if (item.isDirectory()) {
+          File[] contents = item.listFiles();
+          if (contents != null) {
+            for (File content : contents) {
+              cmd.setParams(content.getAbsolutePath());
+              cmd.execute();
+              cmd.clear();
+            }
+          }
+
+          if (item.delete()) {
+            try {
+              IOController.writeLine("Diretório \"" + item.getName() + "\" apagado com sucesso");
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          } else {
+            try {
+              IOController.writeLine("Falha ao excluir o diretório \"" + item.getName());
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+        } else {
+          try {
+            IOController.writeLine("Arquivo ou Diretório inexistente");
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+        }
+      }
     });
 
     commandMap.put(usernameCommand.getName(), usernameCommand);
@@ -332,6 +403,7 @@ public final class CommandManager {
     commandMap.put(echoCommand.getName(), echoCommand);
     commandMap.put(touchCommand.getName(), touchCommand);
     commandMap.put(mkdirCommand.getName(), mkdirCommand);
+    commandMap.put(rmCommand.getName(), rmCommand);
   }
 
   public static Command<String> getUsernameCommand() {
