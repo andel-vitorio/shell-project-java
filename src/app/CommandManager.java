@@ -21,6 +21,7 @@ public final class CommandManager {
   private static Command<Void> touchCommand;
   private static Command<Void> mkdirCommand;
   private static Command<Void> rmCommand;
+  private static Command<Void> mvCommand;
 
   private static Map<String, String> parseArguments(String input) {
     Map<String, String> arguments = new HashMap<>();
@@ -395,6 +396,79 @@ public final class CommandManager {
       }
     });
 
+    /* ------------ mv Setup -------------- */
+    mvCommand = new Command<Void>("mv");
+    mvCommand.setDocumentation("");
+    mvCommand.setAction(cmd -> {
+      String params = cmd.getParams();
+
+      if (cmd.isRedirectedInput()) {
+        String line;
+        while ((line = IOController.readLine()) != null) {
+          params += (line + '\n');
+        }
+      }
+
+      ArrayList<String> paths = Utils.extractQuotedStrings(params);
+      paths.set(0, Utils.expandTilde(paths.get(0)));
+      paths.set(1, Utils.expandTilde(paths.get(1)));
+
+      if (paths.size() > 1) {
+        File sourceFile = new File(paths.get(0));
+        File targetFile = new File(paths.get(1));
+
+        if (!sourceFile.exists()) {
+          try {
+            IOController.writeLine("Arquivo não encontrado!");
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+          return;
+        }
+
+        try {
+          if (targetFile.exists() && sourceFile.getCanonicalFile().equals(targetFile.getCanonicalFile())) {
+            try {
+              IOController.writeLine("O arquivo de origem é o mesmo de destino");
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+            return;
+          }
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+
+        if (targetFile.exists()) {
+          if (targetFile.isDirectory()) {
+            File sourceFileName = new File(paths.get(0));
+            String fileName = sourceFileName.getName();
+            File targetPath = new File(paths.get(1), fileName);
+            
+            try {
+              java.nio.file.Files.move(sourceFileName.toPath(), targetPath.toPath());
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          } else {
+            try {
+              java.nio.file.Files.move(sourceFile.toPath(), targetFile.toPath());
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          }
+        } else {
+          try {
+              java.nio.file.Files.move(sourceFile.toPath(), targetFile.toPath());
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+        }
+
+      }
+
+    });
+
     commandMap.put(usernameCommand.getName(), usernameCommand);
     commandMap.put(hostnameCommand.getName(), hostnameCommand);
     commandMap.put(pwdCommand.getName(), pwdCommand);
@@ -404,6 +478,7 @@ public final class CommandManager {
     commandMap.put(touchCommand.getName(), touchCommand);
     commandMap.put(mkdirCommand.getName(), mkdirCommand);
     commandMap.put(rmCommand.getName(), rmCommand);
+    commandMap.put(mvCommand.getName(), mvCommand);
   }
 
   public static Command<String> getUsernameCommand() {
