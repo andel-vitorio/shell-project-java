@@ -123,7 +123,6 @@ public final class CommandManager {
       String path = System.getProperty("user.dir");
       String mode = "";
 
-
       String params = cmd.getParams();
 
       if (params != null && params.trim().length() > 0) {
@@ -148,10 +147,13 @@ public final class CommandManager {
         }
       }
 
-      path = Utils.expandTilde(path);
+      path = Utils.resolvePath(path);
 
       File dir = new File(path);
+      if (dir.listFiles() == null) return;
+
       ArrayList<File> files = new ArrayList<>(Arrays.asList(dir.listFiles()));
+
 
       boolean list = mode.contains("l");
       boolean all = mode.contains("a");
@@ -310,7 +312,7 @@ public final class CommandManager {
 
       for (String path : dirpaths) {
 
-        path = Utils.expandTilde(path);
+        path = Utils.resolvePath(path);
         String p = "";
 
         for (String str : path.split("/")) {
@@ -347,7 +349,7 @@ public final class CommandManager {
 
       for (String path : dirpaths) {
 
-        path = Utils.expandTilde(path);
+        path = Utils.resolvePath(path);
 
         File item = new File(path);
 
@@ -413,8 +415,8 @@ public final class CommandManager {
       }
 
       ArrayList<String> paths = Utils.extractQuotedStrings(params);
-      paths.set(0, Utils.expandTilde(paths.get(0)));
-      paths.set(1, Utils.expandTilde(paths.get(1)));
+      paths.set(0, Utils.resolvePath(paths.get(0)));
+      paths.set(1, Utils.resolvePath(paths.get(1)));
 
       if (paths.size() > 1) {
         File sourceFile = new File(paths.get(0));
@@ -488,7 +490,7 @@ public final class CommandManager {
       ArrayList<String> paths = Utils.extractQuotedStrings(params);
 
       for (String path : paths) {
-        path = Utils.expandTilde(path);
+        path = Utils.resolvePath(path);
         try {
           BufferedReader br = new BufferedReader(new FileReader(path));
           String line;

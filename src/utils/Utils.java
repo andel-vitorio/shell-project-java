@@ -71,8 +71,15 @@ public class Utils {
   }
 
   public static String resolvePath(String inputPath) {
-    File currentDirectory = new File(System.getProperty("user.dir"));
     String[] pathComponents = inputPath.split(File.separator);
+
+    File currentDirectory = null;
+
+    if (inputPath.startsWith("/")) {
+      currentDirectory = new File("/");
+    } else {
+      currentDirectory = new File(System.getProperty("user.dir"));
+    }
 
     for (int i = 0; i < pathComponents.length; i++) {
       String component = pathComponents[i];
@@ -81,7 +88,7 @@ public class Utils {
         currentDirectory = currentDirectory.getParentFile();
       } else if (component.startsWith("~")) {
         String homeDir = System.getProperty("user.home");
-        pathComponents[i] = component.replaceFirst("~", homeDir);
+        pathComponents[i] = component.replace("~", homeDir);
         currentDirectory = new File(homeDir);
       } else {
         currentDirectory = new File(currentDirectory, component);
