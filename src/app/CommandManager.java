@@ -16,7 +16,8 @@ public final class CommandManager {
   private static Command<String> hostnameCommand;
   private static Command<String> pwdCommand;
   private static Command<ArrayList<File>> lsCommand;
-  private static Command<String> manCommand;
+  private static Command<String> manCommand;  
+  private static Command<String> echoCommand;
 
   private static Map<String, String> parseArguments(String input) {
     Map<String, String> arguments = new HashMap<>();
@@ -61,7 +62,7 @@ public final class CommandManager {
     return arguments;
   }
 
-  public static void setup() {
+  public static void setup() throws IOException {
 
     /* ------------ Username Setup -------------- */
     usernameCommand = new Command<String>("username");
@@ -200,7 +201,8 @@ public final class CommandManager {
 
       cmd.addResult(files);
     });
-
+    
+    /* ------------ man Setup -------------- */
     manCommand = new Command<String>("man");
     manCommand.setDocumentation("");
     manCommand.setAction(cmd -> {
@@ -226,11 +228,32 @@ public final class CommandManager {
       }
     });
 
+    /* ------------ echo Setup -------------- */
+    echoCommand = new Command<String>("echo");
+    echoCommand.setDocumentation("");
+    echoCommand.setAction(cmd -> {
+      String msg = cmd.getParams(), line;
+
+      if (cmd.isRedirectedInput()) {
+        msg = "";
+        while ((line = IOController.readLine()) != null) {
+          msg += line + '\n';
+        }
+      }
+      try {
+        IOController.writeLine(Utils.removeQuotes(msg));
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      cmd.addResult(msg);
+    });
+
     commandMap.put(usernameCommand.getName(), usernameCommand);
     commandMap.put(hostnameCommand.getName(), hostnameCommand);
     commandMap.put(pwdCommand.getName(), pwdCommand);
     commandMap.put(lsCommand.getName(), lsCommand);    
     commandMap.put(manCommand.getName(), manCommand);
+    commandMap.put(echoCommand.getName(), echoCommand);
 
   }
 

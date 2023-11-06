@@ -10,10 +10,12 @@ public class Command<ResultType> {
   private String documentation;
   private Consumer<Command<ResultType>> action;
   private ResultType results;
+  private boolean redirectedInput;
 
   public Command(String name) {
     this.name = name;
     options = new String();
+    redirectedInput = false;
   }
 
   public String getName() {
@@ -52,6 +54,7 @@ public class Command<ResultType> {
     this.options = "";
     this.params = "";
     this.results = null;
+    redirectedInput = false;
   }
 
   public void execute() {
@@ -72,4 +75,13 @@ public class Command<ResultType> {
   public boolean hasArguments() {
     return this.params != null && this.params.length() > 0; 
   }
+
+  public void setRedirectedInput(boolean redirectedInput) {
+    this.redirectedInput = redirectedInput;
+  }
+
+  public boolean isRedirectedInput() {
+    return this.redirectedInput;
+  }
+
 }

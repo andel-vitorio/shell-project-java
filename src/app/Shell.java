@@ -40,6 +40,7 @@ public class Shell {
     Pattern pattern = Pattern.compile("(\\S+)(?:\\s+(.*))?");
     Matcher matcher = pattern.matcher(text);
     String cmd = "", params = "";
+    boolean redirectionInput = false;
 
     if (matcher.find()) {
       cmd = matcher.group(1);
@@ -48,22 +49,28 @@ public class Shell {
 
     Command<?> command = null;
 
-    if (text.contains(">")) {
-      int index = text.indexOf(">");
-      String[] values = text.substring(index + 1).trim().split("\\s+");
-      if (values.length > 0 && values[0].trim() != "")
-        IOController.setOutputStream(values[0]);
+    if (params != null && params.contains(">")) {
+      int index = params.indexOf(">");
+      String[] values = params.substring(index + 1).trim().split("\\s+");
+      if (values.length > 0 && values[0].trim() != "") {
+        IOController.setOutputStream(values[0]); 
+        params = params.replace(values[0], "");        
+        params = params.replace(">", "");
+      }
       else
         System.out.println(
             IOController.parseTags("<red><b>Erro:<reset><red> É necessário informar o arquivo de saída.<reset>\n"));
     } else
       IOController.setOutputStream("stdout");
 
-    if (text.contains("<")) {
-      int index = text.indexOf("<");
-      String[] values = text.substring(index + 1).trim().split("\\s+");
-      if (values.length > 0 && values[0].trim() != "")
-        IOController.setInputStream(values[0]);
+    if (params != null && params.contains("<")) {
+      int index = params.indexOf("<");
+      String[] values = params.substring(index + 1).trim().split("\\s+");
+      if (values.length > 0 && values[0].trim() != "") {
+        params = params.replace(values[0], "");        
+        params = params.replace("<", "");
+        redirectionInput = IOController.setInputStream(values[0]);
+      }
       else
         System.out.println(
             IOController.parseTags("<red><b>Erro:<reset><red> É necessário informar o arquivo de entrada.<reset>\n"));
@@ -73,12 +80,15 @@ public class Shell {
     if (cmd.equals("exit"))
       this.isRunning = false;
     else if ((command = CommandManager.getCommandByName(cmd.trim())) != null) {
-      command.setParams(params);
+      if (params != null) command.setParams(params.trim() + '\n');
+      command.setRedirectedInput(redirectionInput);
       command.execute();
       command.clear();
     } else {
       IOController.writeLine("<red>Comando Inexistente: <b>" + cmd + "<reset>\n");
     }
+
+    IOController.reset();
   }
 
   public void run() throws IOException {

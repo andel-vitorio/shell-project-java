@@ -72,7 +72,7 @@ public class IOController {
     System.out.print(parseTags(text));
   }
 
-  public static void setInputStream(String stream) throws FileNotFoundException {
+  public static boolean setInputStream(String stream) throws FileNotFoundException {
     if ("stdin".equals(stream)) {
       inputStream = System.in;
     } else {
@@ -80,9 +80,11 @@ public class IOController {
         FileInputStream inputFile = new FileInputStream(stream);
         inputStream = inputFile;
       } catch (FileNotFoundException e) {
-        throw new FileNotFoundException("Falha ao abrir arquivo de entrada: " + e.getMessage());
+        System.out.print(e.getMessage());
+        return false;
       }
     }
+    return true;
   }
 
   public static String readLine() {
@@ -95,4 +97,8 @@ public class IOController {
     }
   }
 
+  public static void reset() throws IOException {
+    setInputStream("stdin");
+    setOutputStream("stdout");
+  }
 }
