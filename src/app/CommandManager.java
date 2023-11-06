@@ -22,6 +22,7 @@ public final class CommandManager {
   private static Command<Void> mkdirCommand;
   private static Command<Void> rmCommand;
   private static Command<Void> mvCommand;
+  private static Command<Void> catCommand;
 
   private static Map<String, String> parseArguments(String input) {
     Map<String, String> arguments = new HashMap<>();
@@ -444,7 +445,7 @@ public final class CommandManager {
             File sourceFileName = new File(paths.get(0));
             String fileName = sourceFileName.getName();
             File targetPath = new File(paths.get(1), fileName);
-            
+
             try {
               java.nio.file.Files.move(sourceFileName.toPath(), targetPath.toPath());
             } catch (IOException e) {
@@ -459,12 +460,43 @@ public final class CommandManager {
           }
         } else {
           try {
-              java.nio.file.Files.move(sourceFile.toPath(), targetFile.toPath());
-            } catch (IOException e) {
-              e.printStackTrace();
-            }
+            java.nio.file.Files.move(sourceFile.toPath(), targetFile.toPath());
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
         }
 
+      }
+
+    });
+
+    /* ------------ cat Setup -------------- */
+    catCommand = new Command<Void>("cat");
+    catCommand.setDocumentation("");
+    catCommand.setAction(cmd -> {
+      String params = cmd.getParams();
+
+      if (cmd.isRedirectedInput()) {
+        String line;
+        while ((line = IOController.readLine()) != null) {
+          params += (line + '\n');
+        }
+      }
+
+      ArrayList<String> paths = Utils.extractQuotedStrings(params);
+
+      for (String path : paths) {
+        path = Utils.expandTilde(path);
+        try {
+          BufferedReader br = new BufferedReader(new FileReader(path));
+          String line;
+          while ((line = br.readLine()) != null) {
+            System.out.println(line);
+          }
+          br.close();
+        } catch (IOException e) {
+          System.err.println("Erro ao ler o arquivo: " + path);
+        }
       }
 
     });
@@ -479,6 +511,7 @@ public final class CommandManager {
     commandMap.put(mkdirCommand.getName(), mkdirCommand);
     commandMap.put(rmCommand.getName(), rmCommand);
     commandMap.put(mvCommand.getName(), mvCommand);
+    commandMap.put(catCommand.getName(), catCommand);
   }
 
   public static Command<String> getUsernameCommand() {
