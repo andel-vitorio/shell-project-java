@@ -24,6 +24,8 @@ public final class CommandManager {
   private static Command<Void> mvCommand;
   private static Command<Void> catCommand;
   private static Command<Void> cdCommand;
+  private static Command<Void> cpCommand;
+  private static Command<String> grepCommand;
 
   private static Map<String, String> parseArguments(String input) {
     Map<String, String> arguments = new HashMap<>();
@@ -150,10 +152,10 @@ public final class CommandManager {
       path = Utils.resolvePath(path);
 
       File dir = new File(path);
-      if (dir.listFiles() == null) return;
+      if (dir.listFiles() == null)
+        return;
 
       ArrayList<File> files = new ArrayList<>(Arrays.asList(dir.listFiles()));
-
 
       boolean list = mode.contains("l");
       boolean all = mode.contains("a");
@@ -530,6 +532,43 @@ public final class CommandManager {
 
     });
 
+    /* ------------ cp Setup -------------- */
+    cpCommand = new Command<Void>("cp");
+    cpCommand.setDocumentation("");
+    cpCommand.setAction(cmd -> {
+      String params = cmd.getParams();
+
+      if (cmd.isRedirectedInput()) {
+        String line;
+        while ((line = IOController.readLine()) != null) {
+          params += (line + '\n');
+        }
+      }
+
+      ArrayList<String> paths = Utils.extractQuotedStrings(params);
+
+      if (paths.size() > 1 ) {
+        String sourcePath = Utils.resolvePath(paths.get(0));
+        String targetPath = Utils.resolvePath(paths.get(1));
+        try (InputStream in = new FileInputStream(sourcePath);
+             OutputStream out = new FileOutputStream(targetPath)) {
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+
+            System.out.println("Arquivo copiado com sucesso.");
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.out.println("Falha ao copiar o arquivo.");
+        }
+      }
+
+    });
+
     commandMap.put(usernameCommand.getName(), usernameCommand);
     commandMap.put(hostnameCommand.getName(), hostnameCommand);
     commandMap.put(pwdCommand.getName(), pwdCommand);
@@ -542,6 +581,8 @@ public final class CommandManager {
     commandMap.put(mvCommand.getName(), mvCommand);
     commandMap.put(catCommand.getName(), catCommand);
     commandMap.put(cdCommand.getName(), cdCommand);
+    commandMap.put(cpCommand.getName(), cpCommand);
+    // commandMap.put(grepCommand.getName(), grepCommand);
   }
 
   public static Command<String> getUsernameCommand() {
