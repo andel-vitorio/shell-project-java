@@ -24,26 +24,29 @@ public class Utils {
   public static ArrayList<String> extractQuotedStrings(String input) {
     ArrayList<String> result = new ArrayList<>();
 
-    Pattern pattern = Pattern.compile("'(.*?)'|\"(.*?)\"|([^\"'\\s]+)");
-    Matcher matcher = pattern.matcher(input);
-
-    while (matcher.find()) {
-      String singleQuotes = matcher.group(1);
-      String doubleQuotes = matcher.group(2);
-      String unquoted = matcher.group(3);
-
-      if (singleQuotes != null) {
-        result.add(singleQuotes);
-      }
-
-      if (doubleQuotes != null) {
-        result.add(doubleQuotes);
-      }
-
-      if (unquoted != null) {
-        result.add(unquoted);
+    for (String line: input.split("\n")) {
+      Pattern pattern = Pattern.compile("'(.*?)'|\"(.*?)\"|([^\"'\\s]+)");
+      Matcher matcher = pattern.matcher(line);
+  
+      while (matcher.find()) {
+        String singleQuotes = matcher.group(1);
+        String doubleQuotes = matcher.group(2);
+        String unquoted = matcher.group(3);
+  
+        if (singleQuotes != null) {
+          result.add(singleQuotes);
+        }
+  
+        if (doubleQuotes != null) {
+          result.add(doubleQuotes);
+        }
+  
+        if (unquoted != null) {
+          result.add(unquoted);
+        }
       }
     }
+
 
     return result;
   }

@@ -14,6 +14,7 @@ public class IOController {
 
   private static OutputStream outputStream = System.out;
   private static InputStream inputStream = System.in;
+  private static BufferedReader reader;
 
   public static String parseTags(String text) {
     if (text == null)
@@ -78,6 +79,7 @@ public class IOController {
     } else {
       try {
         FileInputStream inputFile = new FileInputStream(stream);
+        reader = null;
         inputStream = inputFile;
       } catch (FileNotFoundException e) {
         System.out.print(e.getMessage());
@@ -89,7 +91,7 @@ public class IOController {
 
   public static String readLine() {
     try {
-      BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+      if (reader == null) reader = new BufferedReader(new InputStreamReader(inputStream));
       return reader.readLine();
     } catch (IOException e) {
       e.printStackTrace();
@@ -100,5 +102,6 @@ public class IOController {
   public static void reset() throws IOException {
     setInputStream("stdin");
     setOutputStream("stdout");
+    reader = null;
   }
 }

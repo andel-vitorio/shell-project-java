@@ -3,8 +3,8 @@ package app;
 import java.io.*;
 import java.net.*;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.regex.*;
+import java.nio.file.attribute.*;
 
 import utils.Utils;
 
@@ -16,8 +16,9 @@ public final class CommandManager {
   private static Command<String> hostnameCommand;
   private static Command<String> pwdCommand;
   private static Command<ArrayList<File>> lsCommand;
-  private static Command<String> manCommand;  
+  private static Command<String> manCommand;
   private static Command<String> echoCommand;
+  private static Command<Void> touchCommand;
 
   private static Map<String, String> parseArguments(String input) {
     Map<String, String> arguments = new HashMap<>();
@@ -201,7 +202,7 @@ public final class CommandManager {
 
       cmd.addResult(files);
     });
-    
+
     /* ------------ man Setup -------------- */
     manCommand = new Command<String>("man");
     manCommand.setDocumentation("");
@@ -248,13 +249,51 @@ public final class CommandManager {
       cmd.addResult(msg);
     });
 
+    /* ------------ touch Setup -------------- */
+    touchCommand = new Command<Void>("touch");
+    touchCommand.setDocumentation("");
+    touchCommand.setAction(cmd -> {
+      String params = cmd.getParams();
+      
+      if (cmd.isRedirectedInput()) {
+        String line;
+        while((line = IOController.readLine()) != null) {
+          params += (line + '\n');
+        }
+      }
+
+      ArrayList<String> filepaths = Utils.extractQuotedStrings(params);
+
+      for (String path : filepaths) {
+        File file = new File(path);
+
+        Set<PosixFilePermission> permissions = EnumSet.of(PosixFilePermission.OWNER_READ,
+            PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ);
+
+        try {
+          FileOutputStream fos = new FileOutputStream(file);
+          java.nio.file.Files.setPosixFilePermissions(file.toPath(), permissions);
+          fos.close();
+          IOController.writeLine("Arquivo " + file + " criado com sucesso");
+        } catch (IOException e) {
+          try {
+            IOController.writeLine(e.getMessage());
+          } catch (IOException e1) {
+            e1.printStackTrace();
+          }
+        }
+      }
+
+      System.out.println("");
+    });
+
     commandMap.put(usernameCommand.getName(), usernameCommand);
     commandMap.put(hostnameCommand.getName(), hostnameCommand);
     commandMap.put(pwdCommand.getName(), pwdCommand);
-    commandMap.put(lsCommand.getName(), lsCommand);    
+    commandMap.put(lsCommand.getName(), lsCommand);
     commandMap.put(manCommand.getName(), manCommand);
     commandMap.put(echoCommand.getName(), echoCommand);
-
+    commandMap.put(touchCommand.getName(), touchCommand);
   }
 
   public static Command<String> getUsernameCommand() {
