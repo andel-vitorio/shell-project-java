@@ -5,6 +5,7 @@ import java.net.*;
 import java.util.*;
 import java.util.regex.*;
 import java.nio.file.attribute.*;
+import java.util.zip.*;
 
 import utils.Utils;
 
@@ -26,49 +27,7 @@ public final class CommandManager {
   private static Command<Void> cdCommand;
   private static Command<Void> cpCommand;
   private static Command<String> grepCommand;
-
-  private static Map<String, String> parseArguments(String input) {
-    Map<String, String> arguments = new HashMap<>();
-    String[] parts = input.split("\\s+");
-
-    String option = null;
-    boolean isQuotedValue = false;
-    StringBuilder quotedValue = new StringBuilder();
-
-    for (String part : parts) {
-      if (part.startsWith("--") && !isQuotedValue) {
-        option = part.substring(2);
-      } else if (option != null) {
-        if (isQuotedValue) {
-          quotedValue.append(" ").append(part);
-
-          if (part.endsWith("\"")) {
-            isQuotedValue = false;
-            arguments.put(option, quotedValue.toString().replace("\"", ""));
-            option = null;
-            quotedValue.setLength(0);
-          }
-        } else {
-          if (part.startsWith("\"")) {
-            isQuotedValue = true;
-            quotedValue.append(part);
-
-            if (part.endsWith("\"")) {
-              isQuotedValue = false;
-              arguments.put(option, quotedValue.toString().replace("\"", ""));
-              option = null;
-              quotedValue.setLength(0);
-            }
-          } else {
-            arguments.put(option, part);
-            option = null;
-          }
-        }
-      }
-    }
-
-    return arguments;
-  }
+  private static Command<String> sleepCommand;
 
   public static void setup() throws IOException {
 
@@ -586,7 +545,7 @@ public final class CommandManager {
           System.out.println(e.getMessage() + '\n');
           return;
         }
-      } else if (!(args.size() == 1 && cmd.isRedirectedInput())){
+      } else if (!(args.size() == 1 && cmd.isRedirectedInput())) {
         System.out.println("Argumentos insulficientes");
         return;
       }
@@ -609,6 +568,29 @@ public final class CommandManager {
       }
     });
 
+    /* ------------ sleep Setup -------------- */
+    sleepCommand = new Command<String>("sleep");
+    sleepCommand.setDocumentation("");
+    sleepCommand.setAction(cmd -> {
+
+      String params = cmd.getParams();
+
+      if (cmd.isRedirectedInput()) {
+        String line;
+        while ((line = IOController.readLine()) != null) {
+          params += (line + '\n');
+        }
+      }
+
+      ArrayList<String> item = Utils.extractQuotedStrings(params);
+
+      try {
+        Thread.sleep(Integer.valueOf(item.get(0)) * 1000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    });
+
     commandMap.put(usernameCommand.getName(), usernameCommand);
     commandMap.put(hostnameCommand.getName(), hostnameCommand);
     commandMap.put(pwdCommand.getName(), pwdCommand);
@@ -623,6 +605,7 @@ public final class CommandManager {
     commandMap.put(cdCommand.getName(), cdCommand);
     commandMap.put(cpCommand.getName(), cpCommand);
     commandMap.put(grepCommand.getName(), grepCommand);
+    commandMap.put(sleepCommand.getName(), sleepCommand);
   }
 
   public static Command<String> getUsernameCommand() {

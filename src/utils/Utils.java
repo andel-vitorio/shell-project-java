@@ -1,9 +1,9 @@
 package utils;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.*;
+import java.util.*;
+import java.util.regex.*;
+import java.util.zip.*;
 
 public class Utils {
   public static String expandTilde(String path) {
@@ -96,6 +96,78 @@ public class Utils {
     }
 
     return currentDirectory.getAbsolutePath();
+  }
+
+  public static Map<String, String> parseArguments(String input) {
+    Map<String, String> arguments = new HashMap<>();
+    String[] parts = input.split("\\s+");
+
+    String option = null;
+    boolean isQuotedValue = false;
+    StringBuilder quotedValue = new StringBuilder();
+
+    for (String part : parts) {
+      if (part.startsWith("--") && !isQuotedValue) {
+        option = part.substring(2);
+      } else if (option != null) {
+        if (isQuotedValue) {
+          quotedValue.append(" ").append(part);
+
+          if (part.endsWith("\"")) {
+            isQuotedValue = false;
+            arguments.put(option, quotedValue.toString().replace("\"", ""));
+            option = null;
+            quotedValue.setLength(0);
+          }
+        } else {
+          if (part.startsWith("\"")) {
+            isQuotedValue = true;
+            quotedValue.append(part);
+
+            if (part.endsWith("\"")) {
+              isQuotedValue = false;
+              arguments.put(option, quotedValue.toString().replace("\"", ""));
+              option = null;
+              quotedValue.setLength(0);
+            }
+          } else {
+            arguments.put(option, part);
+            option = null;
+          }
+        }
+      }
+    }
+
+    return arguments;
+  }
+
+  public static void zipDirectory(File dir, String baseName, ZipOutputStream zos) throws IOException {
+    File[] files = dir.listFiles();
+
+    if (files != null) {
+      for (File file : files) {
+        if (file.isDirectory()) {
+          zipDirectory(file, baseName + file.getName() + File.separator, zos);
+        } else {
+          zipFile(file, zos, baseName);
+        }
+      }
+    }
+  }
+
+  public static void zipFile(File file, ZipOutputStream zos, String baseName) throws IOException  {
+    FileInputStream fis = new FileInputStream(file);
+    ZipEntry zipEntry = new ZipEntry(baseName + file.getName());
+    zos.putNextEntry(zipEntry);
+
+    byte[] buffer = new byte[1024];
+    int length;
+
+    while ((length = fis.read(buffer)) > 0) {
+      zos.write(buffer, 0, length);
+    }
+
+    fis.close();
   }
 
 }
