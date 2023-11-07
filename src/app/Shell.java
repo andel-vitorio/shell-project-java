@@ -1,9 +1,9 @@
 package app;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.io.*;
 
 import utils.Utils;
 
@@ -35,7 +35,48 @@ public class Shell {
     pwd.clear();
   }
 
-  public void executeCommandFromText(String text) throws IOException, InterruptedException {
+  public static void pipe(String pipeline) throws IOException, InterruptedException {
+    {
+      String[] commands = pipeline.split("\\|");
+      ProcessBuilder[] builders = new ProcessBuilder[commands.length];
+      
+      var pwd = CommandManager.getPwdCommand();
+      pwd.addOption("-q");
+      pwd.execute();
+
+      String directory = pwd.getResults();
+
+      pwd.clear();
+
+      for (int i = 0; i < commands.length; i++) {
+        List<String> params = new ArrayList<>();
+        params.add("java");
+        params.add("-cp");
+        params.add("./bin");
+        params.add("App");
+        params.add("pipeline");
+        params.add(commands[i]);
+        params.add(directory);
+        if (i!=0) params.add("redirected entry");
+        builders[i] = new ProcessBuilder(params);
+      }
+
+
+      List<Process> processes = ProcessBuilder.startPipeline(Arrays.asList(builders));
+      Process last = (Process) processes.get(processes.size() - 1);
+      try (InputStream is = last.getInputStream();
+          Reader isr = new InputStreamReader(is);
+          BufferedReader r = new BufferedReader(isr)) {
+        String line;
+        while ((line = r.readLine()) != null) {
+          System.out.println(line);
+        }
+      }
+
+    }
+  }
+
+  public void executeCommandFromText(String text, boolean fromPipeline) throws IOException, InterruptedException {
     Pattern pattern = Pattern.compile("(\\S+)(?:\\s+(.*))?");
     Matcher matcher = pattern.matcher(text);
     String cmd = "", params = "";
@@ -65,6 +106,9 @@ public class Shell {
       } catch (IOException e) {
         e.printStackTrace();
       }
+    } else if (text.contains("|")) {
+      pipe(text);
+      return;
     } else {
 
       if (matcher.find()) {
@@ -83,7 +127,7 @@ public class Shell {
           params = params.replace(">", "");
         } else
           System.out.println(
-              IOController.parseTags("<red><b>Erro:<reset><red> É necessário informar o arquivo de saída.<reset>\n"));
+              Utils.parseTags("<red><b>Erro:<reset><red> É necessário informar o arquivo de saída.<reset>\n"));
       } else
         IOController.setOutputStream("stdout");
 
@@ -96,7 +140,7 @@ public class Shell {
           redirectionInput = IOController.setInputStream(values[0]);
         } else
           System.out.println(
-              IOController.parseTags("<red><b>Erro:<reset><red> É necessário informar o arquivo de entrada.<reset>\n"));
+              Utils.parseTags("<red><b>Erro:<reset><red> É necessário informar o arquivo de entrada.<reset>\n"));
       } else
         IOController.setInputStream("stdin");
 
@@ -105,6 +149,7 @@ public class Shell {
       else if ((command = CommandManager.getCommandByName(cmd.trim())) != null) {
         if (params != null)
           command.setParams(params.trim() + '\n');
+        command.setFromPipeline(fromPipeline);
         command.setRedirectedInput(redirectionInput);
         command.execute();
         command.clear();
@@ -114,7 +159,8 @@ public class Shell {
 
     }
 
-    System.out.println();
+    if (!fromPipeline)
+      System.out.println();
     IOController.reset();
   }
 
@@ -127,7 +173,7 @@ public class Shell {
     while (isRunning) {
       this.writeCommandLine();
       String commandLine = IOController.readLine();
-      executeCommandFromText(commandLine);
+      executeCommandFromText(commandLine, false);
     }
 
   }

@@ -6,6 +6,37 @@ import java.util.regex.*;
 import java.util.zip.*;
 
 public class Utils {
+
+  private static final String NORMAL_TYPE = "\u001B[0m";
+  private static final String BOLD_TYPE = "\u001B[1m";
+  private static final String RED_COLOR = "\u001B[31m";
+  private static final String GREEN_COLOR = "\u001B[32m";
+  private static final String BLUE_COLOR = "\u001B[34m";
+  private static final String CYAN_COLOR = "\u001B[36m";
+  private static final String MAGENTA_COLOR = "\u001B[35m";
+
+  public static String parseTags(String text) {
+    if (text == null)
+      return "";
+    return text.replace("<reset>", NORMAL_TYPE)
+        .replace("<b>", BOLD_TYPE)
+        .replace("<red>", RED_COLOR)
+        .replace("<green>", GREEN_COLOR)
+        .replace("<blue>", BLUE_COLOR)
+        .replace("<cyan>", CYAN_COLOR)
+        .replace("<magenta>", MAGENTA_COLOR);
+  }
+
+  public static String removeTags(String text) {
+    if (text == null)
+      return "";
+    text = Utils.removeAnsiEscapes(text);
+    return text.replace("<reset>", "")
+        .replace("<b>", "")
+        .replace("<red>", "")
+        .replace("<green>", "");
+  }
+
   public static String expandTilde(String path) {
     if (path.startsWith("~")) {
       String homeDir = System.getProperty("user.home");
@@ -155,7 +186,7 @@ public class Utils {
     }
   }
 
-  public static void zipFile(File file, ZipOutputStream zos, String baseName) throws IOException  {
+  public static void zipFile(File file, ZipOutputStream zos, String baseName) throws IOException {
     FileInputStream fis = new FileInputStream(file);
     ZipEntry zipEntry = new ZipEntry(baseName + file.getName());
     zos.putNextEntry(zipEntry);
@@ -168,6 +199,13 @@ public class Utils {
     }
 
     fis.close();
+  }
+
+  public static String removeAnsiEscapes(String input) {
+    String ansiEscapePattern = "\\x1B\\[[0-?]*[ -/]*[@-~]";
+    Pattern pattern = Pattern.compile(ansiEscapePattern);
+    Matcher matcher = pattern.matcher(input);
+    return matcher.replaceAll("");
   }
 
 }

@@ -38,7 +38,7 @@ public final class CommandManager {
       try {
         String username = System.getProperty("user.name");
         if (!cmd.getOptions().contains("-q"))
-          IOController.writeLine(username + '\n');
+          IOController.writeLine(username);
         cmd.addResult(username);
       } catch (IOException e) {
         e.printStackTrace();
@@ -53,7 +53,7 @@ public final class CommandManager {
         InetAddress localHost = InetAddress.getLocalHost();
         String hostName = localHost.getHostName();
         if (!cmd.getOptions().contains("-q"))
-          IOController.writeLine(hostName + '\n');
+          IOController.writeLine(hostName);
         cmd.addResult(hostName);
       } catch (UnknownHostException e) {
         e.printStackTrace();
@@ -70,7 +70,7 @@ public final class CommandManager {
       try {
         String currentDirPath = currentDir.getCanonicalPath();
         if (!cmd.getOptions().contains("-q"))
-          IOController.writeLine(currentDirPath + '\n');
+          IOController.writeLine(currentDirPath);
         cmd.addResult(currentDirPath);
       } catch (IOException e) {
         e.printStackTrace();
@@ -85,6 +85,12 @@ public final class CommandManager {
       String mode = "";
 
       String params = cmd.getParams();
+
+      if (cmd.fromPipeline()) {
+        if (params == null)
+          params = " ";
+        params += " " + Utils.removeAnsiEscapes(IOController.readLine());
+      }
 
       if (params != null && params.trim().length() > 0) {
         Pattern modePattern = Pattern.compile("-(la|al|l|a)\\s*");
@@ -144,12 +150,18 @@ public final class CommandManager {
 
           if (list) {
             try {
-              IOController.writeLine(dirFile.getName() + symbol);
+              if (dirFile.getName().contains(" ")) {
+                IOController.writeLine("\"" + dirFile.getName() + symbol + "\"");
+              } else
+                IOController.writeLine(dirFile.getName() + symbol);
             } catch (IOException e) {
               e.printStackTrace();
             }
           } else {
-            IOController.write(dirFile.getName() + symbol + "\t");
+            if (dirFile.getName().contains(" "))
+              IOController.write("\"" + dirFile.getName() + "\"" + symbol + "\t");
+            else
+              IOController.write(dirFile.getName() + symbol + "\t");
           }
           IOController.write("<reset>");
         }
@@ -160,12 +172,6 @@ public final class CommandManager {
           } catch (IOException e) {
             e.printStackTrace();
           }
-        }
-
-        try {
-          IOController.writeLine("");
-        } catch (IOException e) {
-          e.printStackTrace();
         }
       }
 
@@ -190,12 +196,6 @@ public final class CommandManager {
           e.printStackTrace();
         }
       }
-
-      try {
-        IOController.writeLine("");
-      } catch (IOException e) {
-        e.printStackTrace();
-      }
     });
 
     /* ------------ echo Setup -------------- */
@@ -204,12 +204,15 @@ public final class CommandManager {
     echoCommand.setAction(cmd -> {
       String msg = cmd.getParams(), line;
 
-      if (cmd.isRedirectedInput()) {
+      if (cmd.isRedirectedInput() || cmd.fromPipeline()) {
         msg = "";
         while ((line = IOController.readLine()) != null) {
-          msg += line + '\n';
+          msg += Utils.removeAnsiEscapes(line) + '\n';
         }
       }
+
+      msg = msg.substring(0, msg.length() - 1);
+
       try {
         IOController.writeLine(Utils.removeQuotes(msg));
       } catch (IOException e) {
@@ -223,18 +226,20 @@ public final class CommandManager {
     touchCommand.setDocumentation("");
     touchCommand.setAction(cmd -> {
       String params = cmd.getParams();
+      if (params == null)
+        params = "";
 
-      if (cmd.isRedirectedInput()) {
+      if (cmd.isRedirectedInput() || cmd.fromPipeline()) {
         String line;
         while ((line = IOController.readLine()) != null) {
-          params += (line + '\n');
+          params += (Utils.removeAnsiEscapes(line) + '\n');
         }
       }
 
       ArrayList<String> filepaths = Utils.extractQuotedStrings(params);
 
       for (String path : filepaths) {
-        File file = new File(path);
+        File file = new File(Utils.resolvePath(path));
 
         Set<PosixFilePermission> permissions = EnumSet.of(PosixFilePermission.OWNER_READ,
             PosixFilePermission.OWNER_WRITE, PosixFilePermission.GROUP_READ, PosixFilePermission.OTHERS_READ);
@@ -243,7 +248,7 @@ public final class CommandManager {
           FileOutputStream fos = new FileOutputStream(file);
           java.nio.file.Files.setPosixFilePermissions(file.toPath(), permissions);
           fos.close();
-          IOController.writeLine("Arquivo " + file + " criado com sucesso");
+          IOController.writeLine("Arquivo " + path + " criado com sucesso");
         } catch (IOException e) {
           try {
             IOController.writeLine(e.getMessage());
@@ -262,10 +267,13 @@ public final class CommandManager {
     mkdirCommand.setAction(cmd -> {
       String params = cmd.getParams();
 
-      if (cmd.isRedirectedInput()) {
+      if (params == null)
+        params = "";
+
+      if (cmd.isRedirectedInput() || cmd.fromPipeline()) {
         String line;
         while ((line = IOController.readLine()) != null) {
-          params += (line + '\n');
+          params += (Utils.removeAnsiEscapes(line) + '\n');
         }
       }
 
@@ -285,8 +293,7 @@ public final class CommandManager {
             } catch (IOException e) {
               e.printStackTrace();
             }
-          } else
-            System.out.println("Falha ao criar o diretório " + directory.getName());
+          }
         }
       }
 
@@ -298,11 +305,13 @@ public final class CommandManager {
     rmCommand.setDocumentation("");
     rmCommand.setAction(cmd -> {
       String params = cmd.getParams();
+      if (params == null)
+        params = "";
 
-      if (cmd.isRedirectedInput()) {
+      if (cmd.isRedirectedInput() || cmd.fromPipeline()) {
         String line;
         while ((line = IOController.readLine()) != null) {
-          params += (line + '\n');
+          params += (Utils.removeAnsiEscapes(line) + '\n');
         }
       }
 
@@ -368,7 +377,9 @@ public final class CommandManager {
     mvCommand.setAction(cmd -> {
       String params = cmd.getParams();
 
-      if (cmd.isRedirectedInput()) {
+      if (params == null) params = "";
+ 
+      if (cmd.isRedirectedInput() || cmd.fromPipeline()) {
         String line;
         while ((line = IOController.readLine()) != null) {
           params += (line + '\n');
@@ -440,8 +451,9 @@ public final class CommandManager {
     catCommand.setDocumentation("");
     catCommand.setAction(cmd -> {
       String params = cmd.getParams();
+      if (params == null) params = "";
 
-      if (cmd.isRedirectedInput()) {
+      if (cmd.isRedirectedInput() || cmd.fromPipeline()) {
         String line;
         while ((line = IOController.readLine()) != null) {
           params += (line + '\n');
@@ -471,8 +483,9 @@ public final class CommandManager {
     cdCommand.setDocumentation("");
     cdCommand.setAction(cmd -> {
       String params = cmd.getParams();
+      if (params == null) params = "";
 
-      if (cmd.isRedirectedInput()) {
+      if (cmd.isRedirectedInput() || cmd.fromPipeline()) {
         String line;
         while ((line = IOController.readLine()) != null) {
           params += (line + '\n');
@@ -545,7 +558,7 @@ public final class CommandManager {
           System.out.println(e.getMessage() + '\n');
           return;
         }
-      } else if (!(args.size() == 1 && cmd.isRedirectedInput())) {
+      } else if (!(args.size() == 1 && (cmd.isRedirectedInput() || cmd.fromPipeline()))) {
         System.out.println("Argumentos insulficientes");
         return;
       }
@@ -574,8 +587,9 @@ public final class CommandManager {
     sleepCommand.setAction(cmd -> {
 
       String params = cmd.getParams();
+      if (params == null) params = "";
 
-      if (cmd.isRedirectedInput()) {
+      if (cmd.isRedirectedInput() || cmd.fromPipeline()) {
         String line;
         while ((line = IOController.readLine()) != null) {
           params += (line + '\n');
@@ -626,5 +640,9 @@ public final class CommandManager {
 
   public static Command<?> getCommandByName(String name) {
     return commandMap.get(name);
+  }
+
+  public static Command<Void> getCdCommand() {
+    return cdCommand;
   }
 }

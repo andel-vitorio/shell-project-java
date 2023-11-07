@@ -2,40 +2,13 @@ package app;
 
 import java.io.*;
 
-public class IOController {
-  private static final String NORMAL_TYPE = "\u001B[0m";
-  private static final String BOLD_TYPE = "\u001B[1m";
-  private static final String RED_COLOR = "\u001B[31m";
-  private static final String GREEN_COLOR = "\u001B[32m";
-  private static final String BLUE_COLOR = "\u001B[34m";  
-  private static final String CYAN_COLOR = "\u001B[36m";
-  private static final String MAGENTA_COLOR = "\u001B[35m";
+import utils.Utils;
 
+public class IOController {
 
   private static OutputStream outputStream = System.out;
   private static InputStream inputStream = System.in;
   private static BufferedReader reader;
-
-  public static String parseTags(String text) {
-    if (text == null)
-      return "";
-    return text.replace("<reset>", NORMAL_TYPE)
-        .replace("<b>", BOLD_TYPE)
-        .replace("<red>", RED_COLOR)
-        .replace("<green>", GREEN_COLOR)
-        .replace("<blue>", BLUE_COLOR)
-        .replace("<cyan>", CYAN_COLOR)
-        .replace("<magenta>", MAGENTA_COLOR);
-  }
-
-  private static String removeTags(String text) {
-    if (text == null)
-      return "";
-    return text.replace("<reset>", "")
-        .replace("<b>", "")
-        .replace("<red>", "")
-        .replace("<green>", "");
-  }
 
   public static void setOutputStream(String stream) throws IOException {
     if ("stdout".equals(stream)) {
@@ -61,7 +34,7 @@ public class IOController {
 
   public static void writeLine(String textLine) throws IOException {
     try {
-      textLine = (outputStream.equals(System.out)) ? parseTags(textLine) : removeTags(textLine);
+      textLine = (outputStream.equals(System.out)) ? Utils.parseTags(textLine) : Utils.removeTags(textLine);
       outputStream.write((textLine + '\n').getBytes());
     } catch (IOException e) {
       e.printStackTrace();
@@ -70,7 +43,7 @@ public class IOController {
   }
 
   public static void write(String text) {
-    System.out.print(parseTags(text));
+    System.out.print(Utils.parseTags(text));
   }
 
   public static boolean setInputStream(String stream) throws FileNotFoundException {
@@ -91,7 +64,8 @@ public class IOController {
 
   public static String readLine() {
     try {
-      if (reader == null) reader = new BufferedReader(new InputStreamReader(inputStream));
+      if (reader == null)
+        reader = new BufferedReader(new InputStreamReader(inputStream));
       return reader.readLine();
     } catch (IOException e) {
       e.printStackTrace();

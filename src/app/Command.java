@@ -11,6 +11,7 @@ public class Command<ResultType> {
   private Consumer<Command<ResultType>> action;
   private ResultType results;
   private boolean redirectedInput;
+  private boolean fromPipeline;
 
   public Command(String name) {
     this.name = name;
@@ -54,6 +55,7 @@ public class Command<ResultType> {
     this.options = "";
     this.params = "";
     this.results = null;
+    fromPipeline = false;
     redirectedInput = false;
   }
 
@@ -82,6 +84,14 @@ public class Command<ResultType> {
 
   public boolean isRedirectedInput() {
     return this.redirectedInput;
+  }
+
+  public void setFromPipeline(boolean fromPipeline) {
+    this.fromPipeline = fromPipeline;
+  }
+
+  public boolean fromPipeline() {
+    return this.fromPipeline;
   }
 
 }
